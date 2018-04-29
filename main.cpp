@@ -2,13 +2,19 @@
 #include "PuzzleReader.h"
 
 #include <iostream>
+#include <string>
 
 int main(int argc, char** argv)
 {
+	std::string puzzleFile = "data/test.txt";
+	if (argc > 1) {
+		puzzleFile = argv[1];
+	}
+	
 	char* pointData;
 	char* edgeData;
 	char* spaceData;
-	gws::Puzzle puzzle = gws::readPuzzle("data/test.txt", &pointData, &edgeData, &spaceData);
+	gws::Puzzle puzzle = gws::readPuzzle(puzzleFile, &pointData, &edgeData, &spaceData);
 	
 	std::cout << "Puzzle info: " << std::endl;
 	std::cout << "Num points: " << puzzle.getNumPoints() << std::endl;
