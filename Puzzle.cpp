@@ -9,6 +9,22 @@
 
 namespace gws
 {
+	size_t Puzzle::getNumPoints(size_t width, size_t height)
+	{
+		return width*height;
+	}
+	
+	size_t Puzzle::getNumEdges(size_t width, size_t height)
+	{
+		// horizontal edges + vertical edges
+		return (width - 1)*height + width*(height - 1);
+	}
+	
+	size_t Puzzle::getNumSpaces(size_t width, size_t height)
+	{
+		return (width - 1)*(height - 1);
+	}
+	
 	Puzzle::Puzzle(size_t w, size_t h, const char* pointData, const char* edgeData, const char* spaceData)
 		: m_width(w), m_height(h), m_pointData(pointData), m_edgeData(edgeData), m_spaceData(spaceData)
 	{
@@ -27,18 +43,17 @@ namespace gws
 	
 	size_t Puzzle::getNumPoints() const
 	{
-		return m_width*m_height;
+		return getNumPoints(m_width, m_height);
 	}
 	
 	size_t Puzzle::getNumEdges() const
 	{
-		// horizontal edges + vertical edges
-		return (m_width - 1)*m_height + m_width*(m_height - 1);
+		return getNumEdges(m_width, m_height);
 	}
 	
 	size_t Puzzle::getNumSpaces() const
 	{
-		return (m_width - 1)*(m_height - 1);
+		return getNumSpaces(m_width, m_height);
 	}
 	
 	size_t Puzzle::getPointIndex(size_t row, size_t col) const

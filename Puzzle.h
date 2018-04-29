@@ -5,6 +5,9 @@
 // 15 May 2018              //
 //////////////////////////////
 
+#ifndef gws_Puzzle_h
+#define gws_Puzzle_h
+
 #include <ostream>
 #include <stddef.h>
 
@@ -40,7 +43,7 @@ namespace gws
 	///////////////////////////////////////////////////////////////////////////
 	enum class SpaceValue : char
 	{
-		BLANK = ' ',
+		BLANK = '_',
 		WHITE = 'w',
 		BLACK = 'b'
 	};
@@ -59,6 +62,39 @@ namespace gws
 	class Puzzle
 	{
 	public:
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the number of intersection points a puzzle with given
+		/// dimensions would have
+		/// 
+		/// \param [in] width the width of the puzzle
+		/// \param [in] height the height of the puzzle
+		/// 
+		/// \returns the number of points
+		///////////////////////////////////////////////////////////////////////
+		static size_t getNumPoints(size_t width, size_t height);
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the number of edges a puzzle with given dimensions
+		/// would have
+		/// 
+		/// \param [in] width the width of the puzzle
+		/// \param [in] height the height of the puzzle
+		/// 
+		/// \returns the number of edges
+		///////////////////////////////////////////////////////////////////////
+		static size_t getNumEdges(size_t width, size_t height);
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the number of spaces a puzzle with given dimensions
+		/// would have
+		/// 
+		/// \param [in] width the width of the puzzle
+		/// \param [in] height the height of the puzzle
+		/// 
+		/// \returns the number of spaces
+		///////////////////////////////////////////////////////////////////////
+		static size_t getNumSpaces(size_t width, size_t height);
+		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Initialize a puzzle from existing data
 		/// 
@@ -246,3 +282,5 @@ std::ostream& operator<<(std::ostream& os, const gws::EdgeValue& v);
 /// \returns the output stream
 ///////////////////////////////////////////////////////////////////////////////
 std::ostream& operator<<(std::ostream& os, const gws::SpaceValue& v);
+
+#endif

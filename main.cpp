@@ -1,14 +1,15 @@
 #include "Puzzle.h"
+#include "PuzzleReader.h"
 
 #include <iostream>
 
 int main(int argc, char** argv)
 {
-	const char* pointData = "sooe";
-	const char* edgeData = "oxoo";
-	const char* spaceData = "w";
+	char* pointData;
+	char* edgeData;
+	char* spaceData;
+	gws::Puzzle puzzle = gws::readPuzzle("data/test.txt", &pointData, &edgeData, &spaceData);
 	
-	gws::Puzzle puzzle(2, 2, pointData, edgeData, spaceData);
 	std::cout << "Puzzle info: " << std::endl;
 	std::cout << "Num points: " << puzzle.getNumPoints() << std::endl;
 	std::cout << "Num edges: " << puzzle.getNumEdges() << std::endl;
@@ -36,6 +37,10 @@ int main(int argc, char** argv)
 			std::cout << "Space " << puzzle.getSpaceIndex(row, col) << ": " << puzzle.getSpaceValue(row, col) << std::endl;
 		}
 	}
+	
+	delete [] pointData;
+	delete [] edgeData;
+	delete [] spaceData;
 	
 	return EXIT_SUCCESS;
 }
