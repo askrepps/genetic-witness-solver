@@ -42,21 +42,17 @@ namespace gws
 				// read row of points/edges
 				for (size_t col = 0; col < *width; ++col) {
 					fileStream >> (*pointBuffer)[pointIndex++];
-					std::cout << "Read point '" << (*pointBuffer)[pointIndex-1] << "' (" << (int)((*pointBuffer)[pointIndex-1]) << ")" << std::endl;
 					if (col < *width - 1) {
 						fileStream >> (*edgeBuffer)[edgeIndex++];
-						std::cout << "Read edge '" << (*edgeBuffer)[edgeIndex-1] << "' (" << (int)((*edgeBuffer)[edgeIndex-1]) << ")" << std::endl;
 					}
 				}
 				
 				// read row of edges/spaces
-				if (row < *width - 1) {
+				if (row < *height - 1) {
 					for (size_t col = 0; col < *width; ++col) {
 						fileStream >> (*edgeBuffer)[edgeIndex++];
-						std::cout << "Read edge '" << (*edgeBuffer)[edgeIndex-1] << "' (" << (int)((*edgeBuffer)[edgeIndex-1]) << ")" << std::endl;
 						if (col < *width - 1) {
 							fileStream >> (*spaceBuffer)[spaceIndex++];
-							std::cout << "Read space '" << (*spaceBuffer)[spaceIndex-1] << "' (" << (int)((*spaceBuffer)[spaceIndex-1]) << ")" << std::endl;
 						}
 					}
 				}
