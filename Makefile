@@ -4,6 +4,7 @@ MKDIRFLAGS = -p
 
 # compiler settings
 CXX = g++
+CXXFLAGS = -std=c++11
 OUTPUT_DIR = build
 
 # OpenCL dependency paths (linux only)
@@ -19,7 +20,7 @@ else
 	LINKFLAGS += -L$(OPENCL_LIBDIR) -lOpenCL
 endif
 
-SOURCES = main.cpp
+SOURCES = *.cpp
 
 all: directories
 	$(CXX) $(CXXFLAGS) -o $(OUTPUT_DIR)/genWitnessSolver $(SOURCES) $(LINKFLAGS)
