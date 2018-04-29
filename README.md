@@ -15,26 +15,26 @@ A puzzle file is a text file with the following contents:
 3. Interleaved data for the contents of all points, edges and spaces. Rows of text alternate between (1) points and horizontal edges and (2) vertical edges and spaces until the bottom of the puzzle is reached.
 
 Point data values:
-Character | Description
---------- | -----------
-o | Open point
-x | The point does not exist in the puzzle
-. | The point contains a dot (the solution must pass through this point)
-s | The point can be the start of a solution (there can be multiple choices in one puzzle)
-e | The point can be the end of a solution (there can be multiple choices in one puzzle)
+| Character | Description |
+| --------- | ----------- |
+| o | Open point |
+| x | The point does not exist in the puzzle |
+| . | The point contains a dot (the solution must pass through this point) |
+| s | The point can be the start of a solution (there can be multiple choices in one puzzle) |
+| e | The point can be the end of a solution (there can be multiple choices in one puzzle) |
 
 Edge data values:
-Character | Description
---------- | -----------
-o | Open edge
-x | The edge is blocked off or does not exist in the puzzle
-. | The edge contains a dot (the solution must pass through this edge)
+| Character | Description |
+| --------- | ----------- |
+| o | Open edge |
+| x | The edge is blocked off or does not exist in the puzzle |
+| . | The edge contains a dot (the solution must pass through this edge) |
 
 Space data values:
-Character | Description
---------- | -----------
-_ | The space is blank
-w | The space contains a white mark (the entire partition containing this space must have only white marks)
-b | The space contains a black mark (the entire partition containing this space must have only black marks)
+| Character | Description |
+| --------- | ----------- |
+| _ | The space is blank |
+| w | The space contains a white mark (the entire partition containing this space must have only white marks) |
+| b | The space contains a black mark (the entire partition containing this space must have only black marks) |
 
 See the data folder for examples of puzzle files with accompanying images.
