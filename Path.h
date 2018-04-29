@@ -8,6 +8,7 @@
 #ifndef gws_Path_h
 #define gws_Path_h
 
+#include <ostream>
 #include <stddef.h>
 
 namespace gws
@@ -37,32 +38,47 @@ namespace gws
 		/// 
 		/// The Path object does not assume ownership of the data's memory.
 		/// 
-		/// \param [in] startPointIndex the index of the path's starting point
 		/// \param [in] moveData the buffer for storing move data
 		/// \param [in] maxLength the maxiumum length
 		///////////////////////////////////////////////////////////////////////
-		Path(size_t startPointIndex, char* moveData, size_t maxLength);
+		Path(char* moveData, size_t maxLength);
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the starting point index of the path
 		/// 
-		/// /returns the path's starting point index
+		/// \returns the path's starting point index
 		///////////////////////////////////////////////////////////////////////
 		size_t getStartPointIndex() const;
 		
 		///////////////////////////////////////////////////////////////////////
+		/// \brief Set the starting point index of the path
+		/// 
+		/// \param [in] index the path's starting point index
+		///////////////////////////////////////////////////////////////////////
+		void setStartPointIndex(size_t index);
+		
+		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the max length of the path
 		/// 
-		/// /returns the path's max length
+		/// \returns the path's max length
 		///////////////////////////////////////////////////////////////////////
 		size_t getMaxLength() const;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the number of moves contained in the path
 		/// 
-		/// /returns the path's number of moves
+		/// \returns the path's number of moves
 		///////////////////////////////////////////////////////////////////////
 		size_t getNumMoves() const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get a particular move value in the path
+		/// 
+		/// \param [in] index the index of the desired move
+		/// 
+		/// \returns the move value
+		///////////////////////////////////////////////////////////////////////
+		MoveValue getMove(size_t index) const;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Append a move to the end of the path
@@ -82,12 +98,32 @@ namespace gws
 		void popMove();
 		
 	private:
-		size_t m_startPointIndex;
-		
 		char* m_moveData;
 		size_t m_maxLength;
 		size_t m_numMoves;
+		
+		size_t m_startPointIndex;
 	};
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Send a move value to an output stream
+/// 
+/// \param [in] os the output stream
+/// \param [in] v the move value
+/// 
+/// \returns the output stream
+///////////////////////////////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream& os, const gws::MoveValue& v);
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Send a path to an output stream
+/// 
+/// \param [in] os the output stream
+/// \param [in] p the path
+/// 
+/// \returns the output stream
+///////////////////////////////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream& os, const gws::Path& p);
 
 #endif

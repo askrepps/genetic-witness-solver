@@ -7,12 +7,13 @@
 
 #include "Path.h"
 
+#include <ostream>
 #include <stddef.h>
 
 namespace gws
 {
-	Path::Path(size_t startPointIndex, char* moveData, size_t maxLength)
-		: m_startPointIndex(startPointIndex), m_moveData(moveData), m_maxLength(maxLength), m_numMoves(0)
+	Path::Path(char* moveData, size_t maxLength)
+		: m_moveData(moveData), m_maxLength(maxLength), m_numMoves(0), m_startPointIndex(0)
 	{
 		// make sure move data buffer is initialized
 		for (size_t i = 0; i < m_maxLength; ++i) {
@@ -35,6 +36,12 @@ namespace gws
 		return m_numMoves;
 	}
 	
+	MoveValue Path::getMove(size_t index) const
+	{
+		// TODO: assert index in range
+		return (MoveValue)m_moveData[index];
+	}
+	
 	void Path::addMove(const MoveValue& value)
 	{
 		if (m_numMoves < m_maxLength) {
@@ -48,4 +55,20 @@ namespace gws
 			m_moveData[m_numMoves--] = (char)MoveValue::NONE;
 		}
 	}
+}
+
+std::ostream& operator<<(std::ostream& os, const gws::MoveValue& v)
+{
+	os << (char)v;
+	
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const gws::Path& p)
+{
+	for (size_t i = 0; i < p.getNumMoves(); ++i) {
+		os << p.getMove(i);
+	}
+	
+	return os;
 }

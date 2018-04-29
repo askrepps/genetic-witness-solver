@@ -1,11 +1,22 @@
+//////////////////////////////
+// main.cpp                 //
+// Andrew Krepps            //
+// EN.605.417 Final Project //
+// 15 May 2018              //
+//////////////////////////////
+
+#include "HostSolver.h"
+#include "Path.h"
 #include "Puzzle.h"
 #include "PuzzleReader.h"
+#include "Solver.h"
 
 #include <iostream>
 #include <string>
 
 int main(int argc, char** argv)
 {
+	// configure run
 	std::string puzzleFile = "data/test.txt";
 	if (argc > 1) {
 		puzzleFile = argv[1];
@@ -16,37 +27,26 @@ int main(int argc, char** argv)
 	char* spaceData;
 	gws::Puzzle puzzle = gws::readPuzzle(puzzleFile, &pointData, &edgeData, &spaceData);
 	
-	std::cout << "Puzzle info: " << std::endl;
-	std::cout << "Num points: " << puzzle.getNumPoints() << std::endl;
-	std::cout << "Num edges: " << puzzle.getNumEdges() << std::endl;
-	std::cout << "Num spaces: " << puzzle.getNumSpaces() << std::endl;
+	// each point can only be visited once, so number of points can be used as the max path length
+	size_t maxPathLength = puzzle.getNumPoints();
+	char* moveData = new char[maxPathLength];
+	gws::Path path(moveData, maxPathLength);
 	
-	for (size_t row = 0; row < puzzle.getHeight(); ++row) {
-		for (size_t col = 0; col < puzzle.getWidth(); ++col) {
-			std::cout << "Point " << puzzle.getPointIndex(row, col) << ": " << puzzle.getPointValue(row, col) << std::endl;
-		}
+	// solve puzzle (on host for now)
+	gws::Solver* solver = new gws::HostSolver();
+	if (solver->solvePuzzle(puzzle, path)) {
+		std::cout << "Puzzle solved" << std::endl;
+		std::cout << "Starting point: " << path.getStartPointIndex() << " | Path: " << path << std::endl;
+	}
+	else {
+		std::cout << "No puzzle solution found" << std::endl;
 	}
 	
-	for (size_t row = 0; row < puzzle.getHeight(); ++row) {
-		for (size_t col = 0; col < puzzle.getWidth(); ++col) {
-			if (col < puzzle.getWidth() - 1) {
-				std::cout << "Edge " << puzzle.getEdgeIndex(row, col, row, col + 1) << ": " << puzzle.getEdgeValue(row, col, row, col + 1) << std::endl;
-			}
-			if (row < puzzle.getHeight() - 1) {
-				std::cout << "Edge " << puzzle.getEdgeIndex(row, col, row + 1, col) << ": " << puzzle.getEdgeValue(row, col, row + 1, col) << std::endl;
-			}
-		}
-	}
-	
-	for (size_t row = 0; row < puzzle.getHeight() - 1; ++row) {
-		for (size_t col = 0; col < puzzle.getWidth() - 1; ++col) {
-			std::cout << "Space " << puzzle.getSpaceIndex(row, col) << ": " << puzzle.getSpaceValue(row, col) << std::endl;
-		}
-	}
-	
+	// clean up memory
 	delete [] pointData;
 	delete [] edgeData;
 	delete [] spaceData;
+	delete [] moveData;
 	
 	return EXIT_SUCCESS;
 }
