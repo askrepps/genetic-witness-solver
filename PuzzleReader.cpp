@@ -67,7 +67,7 @@ namespace gws
 		}
 		else {
 			std::ostringstream oss;
-			oss << "Cout not open file '" << puzzleFile << "'";
+			oss << "Could not open file '" << puzzleFile << "'";
 			
 			throw std::runtime_error(oss.str());
 		}
