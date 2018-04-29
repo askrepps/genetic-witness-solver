@@ -31,4 +31,4 @@ Space data values:
 2. `w`: The space contains a white mark (the entire partition containing this space must have only white marks)
 3. `b`: The space contains a black mark (the entire partition containing this space must have only black marks)
 
-See the data folder for examples of puzzle files with accompanying images.
+See the [data](data) folder for examples of puzzle files with accompanying images.
