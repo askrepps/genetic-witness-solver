@@ -32,3 +32,13 @@ Space data values:
 3. `b`: The space contains a black mark (the entire partition containing this space must have only black marks)
 
 See the [data](data) folder for examples of puzzle files with accompanying images.
+
+## TODO
+Most of the work done so far has been on the host side to experiment with the problem space and create the `HostSolver` implementation for eventual timing comparisons against the `GeneticSolver`. The following items have not yet been implemented:
+- [ ] Host-side validation of black/white space partition constraints
+- [ ] OpenCL program/kernel/memory management in `GeneticSolver`
+- [ ] Genetic algorithm structure 
+- [ ] OpenCL kernel implementation of random solution generation
+- [ ] OpenCL kernel implementation of solution fitness evaluation
+- [ ] OpenCL kernel implementation of population crossover/mutation
+- [ ] Timing comparison between `HostSolver` and `GeneticSolver` in `main`
