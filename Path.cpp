@@ -16,14 +16,17 @@ namespace gws
 		: m_moveData(moveData), m_maxLength(maxLength), m_numMoves(0), m_startPointIndex(0)
 	{
 		// make sure move data buffer is initialized
-		for (size_t i = 0; i < m_maxLength; ++i) {
-			m_moveData[i] = (char)MoveValue::NONE;
-		}
+		clear();
 	}
 	
 	size_t Path::getStartPointIndex() const
 	{
 		return m_startPointIndex;
+	}
+	
+	void Path::setStartPointIndex(size_t index)
+	{
+		m_startPointIndex = index;
 	}
 	
 	size_t Path::getMaxLength() const
@@ -54,6 +57,15 @@ namespace gws
 		if (m_numMoves > 0) {
 			m_moveData[m_numMoves--] = (char)MoveValue::NONE;
 		}
+	}
+	
+	void Path::clear()
+	{
+		for (size_t i = 0; i < m_maxLength; ++i) {
+			m_moveData[i] = (char)MoveValue::NONE;
+		}
+		m_numMoves = 0;
+		m_startPointIndex = 0;
 	}
 }
 

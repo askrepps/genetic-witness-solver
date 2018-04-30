@@ -13,6 +13,8 @@
 
 namespace gws
 {
+	class Path;
+	
 	///////////////////////////////////////////////////////////////////////////
 	/// \enum PointValue
 	/// \brief All possible puzzle intersection point values
@@ -242,6 +244,15 @@ namespace gws
 		/// \returns the value of the given space
 		///////////////////////////////////////////////////////////////////////
 		SpaceValue getSpaceValue(size_t row, size_t col) const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Check if a path is a vlid solution to the puzzle
+		/// 
+		/// \param [in] path the path
+		/// 
+		/// \returns true if the path is a valid solution, false otherwise
+		///////////////////////////////////////////////////////////////////////
+		bool evaluateSolution(const Path& path) const;
 		
 	private:
 		size_t m_width;

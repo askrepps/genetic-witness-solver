@@ -10,6 +10,8 @@
 
 #include "Solver.h"
 
+#include <stddef.h>
+
 namespace gws
 {
 	class Path;
@@ -31,6 +33,9 @@ namespace gws
 		/// \copydoc Solver::solvePuzzle()
 		///////////////////////////////////////////////////////////////////////
 		virtual bool solvePuzzle(const Puzzle& puzzle, Path& path);
+		
+	private:
+		bool searchPuzzle(const Puzzle& puzzle, Path& path, size_t row, size_t col, bool* visitFlags);
 	};
 }
 

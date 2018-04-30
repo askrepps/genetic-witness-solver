@@ -7,6 +7,10 @@
 
 #include "Puzzle.h"
 
+#include "Path.h"
+
+#include <ostream>
+
 namespace gws
 {
 	size_t Puzzle::getNumPoints(size_t width, size_t height)
@@ -118,6 +122,12 @@ namespace gws
 	SpaceValue Puzzle::getSpaceValue(size_t row, size_t col) const
 	{
 		return (SpaceValue)m_spaceData[getSpaceIndex(row, col)];
+	}
+	
+	bool Puzzle::evaluateSolution(const Path& path) const
+	{
+		// TODO: evaluate all puzzle constraints
+		return m_pointData[path.getStartPointIndex()] == (char)PointValue::START;
 	}
 }
 
