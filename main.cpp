@@ -36,7 +36,8 @@ int main(int argc, char** argv)
 	gws::Solver* solver = new gws::HostSolver();
 	if (solver->solvePuzzle(puzzle, path)) {
 		std::cout << "Puzzle solved" << std::endl;
-		std::cout << "Starting point: " << path.getStartPointIndex() << " | Path: " << path << std::endl;
+		std::cout << "Starting row: " << puzzle.getPointRow(path.getStartPointIndex()) << " | Starting col: " << puzzle.getPointCol(path.getStartPointIndex()) << std::endl;
+		std::cout << "Path: " << path << std::endl;
 	}
 	else {
 		std::cout << "No puzzle solution found" << std::endl;
