@@ -126,8 +126,144 @@ namespace gws
 	
 	bool Puzzle::evaluateSolution(const Path& path) const
 	{
-		// TODO: evaluate all puzzle constraints
-		return m_pointData[path.getStartPointIndex()] == (char)PointValue::START;
+		// path must start at a start point
+		size_t startIndex = path.getStartPointIndex();
+		if (startIndex >= getNumPoints() || m_pointData[path.getStartPointIndex()] != (char)PointValue::START) {
+			return false;
+		}
+		
+		// keep track of points visited to make sure no point is visited twice
+		bool* visitedPoints = new bool[getNumPoints()];
+		for (size_t i = 0; i < getNumPoints(); ++i) {
+			visitedPoints[i] = false;
+		}
+		
+		// keep track of edges traversed in order to build partitions
+		// to check white/black space constraints later
+		bool* visitedEdges = new bool[getNumEdges()];
+		for (size_t i = 0; i < getNumEdges(); ++i) {
+			visitedEdges[i] = false;
+		}
+		
+		// create list of dots to ensure the path travels through all of them
+		bool* pointDots = new bool[getNumPoints()];
+		for (size_t i = 0; i < getNumPoints(); ++i) {
+			pointDots[i] = (m_pointData[i] == (char)PointValue::DOT);
+		}
+		
+		bool* edgeDots = new bool[getNumEdges()];
+		for (size_t i = 0; i < getNumEdges(); ++i) {
+			edgeDots[i] = (m_edgeData[i] == (char)EdgeValue::DOT);
+		}
+		
+		// follow path
+		bool validPath = true;
+		size_t row = getPointRow(startIndex);
+		size_t col = getPointCol(startIndex);
+		size_t move = 0;
+		
+		while (validPath && move < path.getNumMoves()) {
+			// mark point as visited
+			visitedPoints[getPointIndex(row, col)] = true;
+			
+			// mark off potential point dot
+			pointDots[getPointIndex(row, col)] = false;
+			
+			// validate next move
+			switch (path.getMove(move)) {
+				case MoveValue::UP:
+					validPath = row > 0
+					         && getPointValue(row - 1, col) != PointValue::BLOCKED
+					         && getEdgeValue(row - 1, col, row, col) != EdgeValue::BLOCKED
+					         && !visitedPoints[getPointIndex(row - 1, col)];
+					if (validPath) {
+						// mark edge as traversed
+						visitedEdges[getEdgeIndex(row - 1, col, row, col)] = true;
+						
+						// mark off potential edge dot
+						edgeDots[getEdgeIndex(row - 1, col, row, col)] = false;
+						
+						// move to next point
+						--row;
+					}
+					break;
+				case MoveValue::DOWN:
+					validPath = row < getHeight() - 1
+					         && getPointValue(row + 1, col) != PointValue::BLOCKED
+					         && getEdgeValue(row, col, row + 1, col) != EdgeValue::BLOCKED
+					         && !visitedPoints[getPointIndex(row + 1, col)];
+					if (validPath) {
+						// mark edge as traversed
+						visitedEdges[getEdgeIndex(row, col, row + 1, col)] = true;
+						
+						// mark off potential edge dot
+						edgeDots[getEdgeIndex(row, col, row + 1, col)] = false;
+						
+						// move to next point
+						++row;
+					}
+					break;
+				case MoveValue::LEFT:
+					validPath = col > 0
+					         && getPointValue(row, col - 1) != PointValue::BLOCKED
+					         && getEdgeValue(row, col - 1, row, col) != EdgeValue::BLOCKED
+					         && !visitedPoints[getPointIndex(row, col - 1)];
+					if (validPath) {
+						// mark edge as traversed
+						visitedEdges[getEdgeIndex(row, col - 1, row, col)] = true;
+						
+						// mark off potential edge dot
+						edgeDots[getEdgeIndex(row, col - 1, row, col)] = false;
+						
+						// move to next point
+						--col;
+					}
+					break;
+				case MoveValue::RIGHT:
+					validPath = col < getWidth() - 1
+					         && getPointValue(row, col + 1) != PointValue::BLOCKED
+					         && getEdgeValue(row, col, row, col + 1) != EdgeValue::BLOCKED
+					         && !visitedPoints[getPointIndex(row, col + 1)];
+					if (validPath) {
+						// mark edge as traversed
+						visitedEdges[getEdgeIndex(row, col, row, col + 1)] = true;
+						
+						// mark off potential edge dot
+						edgeDots[getEdgeIndex(row, col, row, col + 1)] = false;
+						
+						// move to next point
+						++col;
+					}
+					break;
+				default:
+					break;
+			}
+			
+			++move;
+		}
+		
+		// validate point and edge dot constraints
+		size_t i = 0;
+		while (validPath && i < getNumPoints()) {
+			validPath = !pointDots[i];
+			++i;
+		}
+		i = 0;
+		while (validPath && i < getNumEdges()) {
+			validPath = !edgeDots[i];
+			++i;
+		}
+		
+		// TODO: calculate partitions and validate white/black space constraints
+		
+		// clean up memory
+		delete [] visitedPoints;
+		delete [] visitedEdges;
+		delete [] pointDots;
+		delete [] edgeDots;
+		
+		// path must end at an end point
+		return validPath && getPointValue(row, col) == PointValue::END;
 	}
 }
 
