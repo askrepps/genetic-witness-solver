@@ -180,6 +180,9 @@ namespace gws
 		}
 		
 		// TODO: create kernels and set fixed kernel arguments
+		m_generateKernel = 0;
+		m_evaluateKernel = 0;
+		m_crossoverMutateKernel = 0;
 	}
 	
 	void GeneticSolver::initBuffers()
