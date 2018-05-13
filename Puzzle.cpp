@@ -345,7 +345,7 @@ namespace gws
 							searchStack[stackSize] = getSpaceIndex(spaceRow - 1, spaceCol);
 							++stackSize;
 						}
-						if (spaceRow < getHeight() - 1 && spacePartitionNumbers[getSpaceIndex(spaceRow + 1, spaceCol)] == -1
+						if (spaceRow < getHeight() - 2 && spacePartitionNumbers[getSpaceIndex(spaceRow + 1, spaceCol)] == -1
 						                               && !visitedEdges[getEdgeIndex(spaceRow + 1, spaceCol, spaceRow + 1, spaceCol + 1)]) {
 							searchStack[stackSize] = getSpaceIndex(spaceRow + 1, spaceCol);
 							++stackSize;
@@ -355,7 +355,7 @@ namespace gws
 							searchStack[stackSize] = getSpaceIndex(spaceRow, spaceCol - 1);
 							++stackSize;
 						}
-						if (spaceCol < getWidth() - 1 && spacePartitionNumbers[getSpaceIndex(spaceRow, spaceCol + 1)] == -1
+						if (spaceCol < getWidth() - 2 && spacePartitionNumbers[getSpaceIndex(spaceRow, spaceCol + 1)] == -1
 						                              && !visitedEdges[getEdgeIndex(spaceRow, spaceCol + 1, spaceRow + 1, spaceCol + 1)]) {
 							searchStack[stackSize] = getSpaceIndex(spaceRow, spaceCol + 1);
 							++stackSize;
