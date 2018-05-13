@@ -111,6 +111,13 @@ namespace gws
 		Puzzle(size_t w, size_t h, const char* pointData, const char* edgeData, const char* spaceData);
 		
 		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the number of times evaluateSolution() was called
+		/// 
+		/// \returns the number of solution evaluations
+		///////////////////////////////////////////////////////////////////////
+		size_t getNumEvals() const;
+		
+		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the width of the puzzle
 		/// 
 		/// \returns the number of points per row
@@ -289,6 +296,8 @@ namespace gws
 		const char* m_pointData;
 		const char* m_edgeData;
 		const char* m_spaceData;
+		
+		mutable size_t m_numEvals;
 	};
 }
 

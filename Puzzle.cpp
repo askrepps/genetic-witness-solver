@@ -30,9 +30,14 @@ namespace gws
 	}
 	
 	Puzzle::Puzzle(size_t w, size_t h, const char* pointData, const char* edgeData, const char* spaceData)
-		: m_width(w), m_height(h), m_pointData(pointData), m_edgeData(edgeData), m_spaceData(spaceData)
+		: m_width(w), m_height(h), m_pointData(pointData), m_edgeData(edgeData), m_spaceData(spaceData), m_numEvals(0)
 	{
 		// TODO: assert width/height at least 2, at least one start/end
+	}
+	
+	size_t Puzzle::getNumEvals() const
+	{
+		return m_numEvals;
 	}
 	
 	size_t Puzzle::getWidth() const
@@ -144,6 +149,8 @@ namespace gws
 	
 	bool Puzzle::evaluateSolution(const Path& path) const
 	{
+		++m_numEvals;
+		
 		// path must start at a start point
 		size_t startIndex = path.getStartPointIndex();
 		if (startIndex >= getNumPoints() || m_pointData[path.getStartPointIndex()] != (char)PointValue::START) {
