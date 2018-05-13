@@ -29,4 +29,4 @@ directories:
 	$(MKDIR) $(MKDIRFLAGS) $(OUTPUT_DIR)
 
 clean:
-	rm -rf build
+	rm -rf $(OUTPUT_DIR)
