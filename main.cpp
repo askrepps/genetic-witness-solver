@@ -11,6 +11,7 @@
 #include "PuzzleReader.h"
 #include "Solver.h"
 
+#include <chrono>
 #include <iostream>
 #include <string>
 
@@ -34,7 +35,13 @@ int main(int argc, char** argv)
 	
 	// solve puzzle (on host for now)
 	gws::Solver* solver = new gws::HostSolver();
-	if (solver->solvePuzzle(puzzle, path)) {
+	
+	auto start = std::chrono::high_resolution_clock::now();
+	bool solutionFound = solver->solvePuzzle(puzzle, path);
+	auto stop = std::chrono::high_resolution_clock::now();
+	float ms = std::chrono::duration<float>(stop - start).count()*1000.0f;
+	
+	if (solutionFound) {
 		std::cout << "Puzzle solved" << std::endl;
 		std::cout << "Starting row: " << puzzle.getPointRow(path.getStartPointIndex()) << " | Starting col: " << puzzle.getPointCol(path.getStartPointIndex()) << std::endl;
 		std::cout << "Path: " << path << std::endl;
@@ -42,6 +49,8 @@ int main(int argc, char** argv)
 	else {
 		std::cout << "No puzzle solution found" << std::endl;
 	}
+	
+	std::cout << "Execution time: " << ms << " ms" << std::endl;
 	
 	// clean up memory
 	delete [] pointData;
