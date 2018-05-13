@@ -111,17 +111,35 @@ namespace gws
 	
 	PointValue Puzzle::getPointValue(size_t row, size_t col) const
 	{
-		return (PointValue)m_pointData[getPointIndex(row, col)];
+		return getPointValue(getPointIndex(row, col));
+	}
+	
+	PointValue Puzzle::getPointValue(size_t index) const
+	{
+		// TODO: assert index in range
+		return (PointValue)m_pointData[index];
 	}
 	
 	EdgeValue Puzzle::getEdgeValue(size_t row1, size_t col1, size_t row2, size_t col2) const
 	{
-		return (EdgeValue)m_edgeData[getEdgeIndex(row1, col1, row2, col2)];
+		return getEdgeValue(getEdgeIndex(row1, col1, row2, col2));
+	}
+	
+	EdgeValue Puzzle::getEdgeValue(size_t index) const
+	{
+		// TODO: assert index in range
+		return (EdgeValue)m_edgeData[index];
 	}
 	
 	SpaceValue Puzzle::getSpaceValue(size_t row, size_t col) const
 	{
-		return (SpaceValue)m_spaceData[getSpaceIndex(row, col)];
+		return getSpaceValue(getSpaceIndex(row, col));
+	}
+	
+	SpaceValue Puzzle::getSpaceValue(size_t index) const
+	{
+		// TODO: assert index in range
+		return (SpaceValue)m_spaceData[index];
 	}
 	
 	bool Puzzle::evaluateSolution(const Path& path) const
@@ -242,19 +260,113 @@ namespace gws
 			++move;
 		}
 		
+		// validate that path ends at an end point
+		validPath = validPath && getPointValue(row, col) == PointValue::END;
+		
 		// validate point and edge dot constraints
-		size_t i = 0;
-		while (validPath && i < getNumPoints()) {
-			validPath = !pointDots[i];
-			++i;
+		size_t dotIndex = 0;
+		while (validPath && dotIndex < getNumPoints()) {
+			validPath = !pointDots[dotIndex];
+			++dotIndex;
 		}
-		i = 0;
-		while (validPath && i < getNumEdges()) {
-			validPath = !edgeDots[i];
-			++i;
+		dotIndex = 0;
+		while (validPath && dotIndex < getNumEdges()) {
+			validPath = !edgeDots[dotIndex];
+			++dotIndex;
 		}
 		
-		// TODO: calculate partitions and validate white/black space constraints
+		// calculate partitions and validate white/black space constraints
+		if (validPath) {
+			// keep track of which partition each space belongs to
+			// and which partitions have white or black spaces
+			int* spacePartitionNumbers = new int[getNumSpaces()];
+			bool* whitePartitions = new bool[getNumSpaces()];
+			bool* blackPartitions = new bool[getNumSpaces()];
+			int* searchStack = new int[getNumSpaces()];
+			for (size_t i = 0; i < getNumSpaces(); ++i) {
+				spacePartitionNumbers[i] = -1;
+				whitePartitions[i] = false;
+				blackPartitions[i] = false;
+				searchStack[i] = -1;
+			}
+			
+			// run depth-first search until solution is invalidated
+			// or all spaces are assigned to a partition
+			int currentPartition = 0;
+			size_t stackSize = 0;
+			size_t partitionedSpaces = 0;
+			while (validPath && partitionedSpaces < getNumSpaces()) {
+				// find starting point for search
+				size_t spaceIndex = 0;
+				while (spacePartitionNumbers[spaceIndex] >= 0) {
+					++spaceIndex;
+				}
+				
+				// index is guaranteed to be valid since when all
+				// spaces are assigned this loop won't execute
+				searchStack[stackSize] = spaceIndex;
+				++stackSize;
+				
+				while (validPath && stackSize > 0) {
+					// pop space from stack
+					spaceIndex = searchStack[stackSize - 1];
+					--stackSize;
+					
+					// assign partition number to current space and handle space value
+					spacePartitionNumbers[spaceIndex] = currentPartition;
+					++partitionedSpaces;
+					switch (getSpaceValue(spaceIndex)) {
+						case SpaceValue::WHITE:
+							whitePartitions[currentPartition] = true;
+							break;
+						case SpaceValue::BLACK:
+							blackPartitions[currentPartition] = true;
+							break;
+						default:
+							break;
+					}
+					
+					// only continue processing if partition constraint hasn't been violated
+					if (!(whitePartitions[currentPartition] && blackPartitions[currentPartition])) {
+						// check if reachable neighboring spaces need to be processed
+						size_t spaceRow = getSpaceRow(spaceIndex);
+						size_t spaceCol = getSpaceCol(spaceIndex);
+						
+						// space row/col coordinates correspond to the same coordinates of the upper-left point on the space
+						if (spaceRow > 0 && spacePartitionNumbers[getSpaceIndex(spaceRow - 1, spaceCol)] == -1
+						                 && !visitedEdges[getEdgeIndex(spaceRow, spaceCol, spaceRow, spaceCol + 1)]) {
+							searchStack[stackSize] = getSpaceIndex(spaceRow - 1, spaceCol);
+							++stackSize;
+						}
+						if (spaceRow < getHeight() - 1 && spacePartitionNumbers[getSpaceIndex(spaceRow + 1, spaceCol)] == -1
+						                               && !visitedEdges[getEdgeIndex(spaceRow + 1, spaceCol, spaceRow + 1, spaceCol + 1)]) {
+							searchStack[stackSize] = getSpaceIndex(spaceRow + 1, spaceCol);
+							++stackSize;
+						}
+						if (spaceCol > 0 && spacePartitionNumbers[getSpaceIndex(spaceRow, spaceCol - 1)] == -1
+						                 && !visitedEdges[getEdgeIndex(spaceRow, spaceCol, spaceRow + 1, spaceCol)]) {
+							searchStack[stackSize] = getSpaceIndex(spaceRow, spaceCol - 1);
+							++stackSize;
+						}
+						if (spaceCol < getWidth() - 1 && spacePartitionNumbers[getSpaceIndex(spaceRow, spaceCol + 1)] == -1
+						                              && !visitedEdges[getEdgeIndex(spaceRow, spaceCol + 1, spaceRow + 1, spaceCol + 1)]) {
+							searchStack[stackSize] = getSpaceIndex(spaceRow, spaceCol + 1);
+							++stackSize;
+						}
+					}
+					else {
+						validPath = false;
+					}
+				}
+				
+				++currentPartition;
+			}
+			
+			delete [] spacePartitionNumbers;
+			delete [] whitePartitions;
+			delete [] blackPartitions;
+			delete [] searchStack;
+		}
 		
 		// clean up memory
 		delete [] visitedPoints;
@@ -262,8 +374,7 @@ namespace gws
 		delete [] pointDots;
 		delete [] edgeDots;
 		
-		// path must end at an end point
-		return validPath && getPointValue(row, col) == PointValue::END;
+		return validPath;
 	}
 }
 

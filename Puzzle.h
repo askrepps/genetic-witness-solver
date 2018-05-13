@@ -224,6 +224,15 @@ namespace gws
 		PointValue getPointValue(size_t row, size_t col) const;
 		
 		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the value of an intersection point
+		/// 
+		/// \param [in] index the point index (in range [0..(w*h - 1)])
+		/// 
+		/// \returns the value of the given point
+		///////////////////////////////////////////////////////////////////////
+		PointValue getPointValue(size_t index) const;
+		
+		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the value of an edge between two points
 		/// 
 		/// \param [in] row1 the first point row (in range [0..h-1])
@@ -236,6 +245,16 @@ namespace gws
 		EdgeValue getEdgeValue(size_t row1, size_t col1, size_t row2, size_t col2) const;
 		
 		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the value of an edge between two points
+		/// 
+		/// \param [in] index the point index (in range
+		/// [0..((w-1)*h + w*(h-1) - 1)])
+		/// 
+		/// \returns the value of the given point
+		///////////////////////////////////////////////////////////////////////
+		EdgeValue getEdgeValue(size_t index) const;
+		
+		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the value of a space
 		/// 
 		/// \param [in] row the space row (in range [0..h-2])
@@ -244,6 +263,15 @@ namespace gws
 		/// \returns the value of the given space
 		///////////////////////////////////////////////////////////////////////
 		SpaceValue getSpaceValue(size_t row, size_t col) const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the value of a space
+		/// 
+		/// \param [in] index the point index (in range [0..((w-1)*(h-1) - 1)])
+		/// 
+		/// \returns the value of the given point
+		///////////////////////////////////////////////////////////////////////
+		SpaceValue getSpaceValue(size_t index) const;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Check if a path is a vlid solution to the puzzle
