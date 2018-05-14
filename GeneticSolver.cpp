@@ -378,7 +378,7 @@ namespace gws
 		m_lastErrNum = clEnqueueWriteBuffer(
 			m_queue,
 			m_puzzlePointBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(char)*m_numPuzzlePoints,
 			(void*)puzzle.getPointData(),
@@ -390,7 +390,7 @@ namespace gws
 		m_lastErrNum = clEnqueueWriteBuffer(
 			m_queue,
 			m_puzzleEdgeBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(char)*m_numPuzzleEdges,
 			(void*)puzzle.getEdgeData(),
@@ -402,7 +402,7 @@ namespace gws
 		m_lastErrNum = clEnqueueWriteBuffer(
 			m_queue,
 			m_puzzleSpaceBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(char)*m_numPuzzleSpaces,
 			(void*)puzzle.getSpaceData(),
@@ -418,7 +418,7 @@ namespace gws
 		m_lastErrNum = clEnqueueWriteBuffer(
 			m_queue,
 			m_populationBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(unsigned char)*m_populationSize*m_numPuzzlePoints,
 			(void*)population,
@@ -446,7 +446,7 @@ namespace gws
 		m_lastErrNum = clEnqueueReadBuffer(
 			m_queue,
 			m_fitnessBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(int)*m_populationSize,
 			(void*)fitness,
@@ -458,7 +458,7 @@ namespace gws
 		m_lastErrNum = clEnqueueReadBuffer(
 			m_queue,
 			m_startPointBuffer,
-			CL_TRUE,
+			CL_FALSE,
 			0,
 			sizeof(unsigned int)*m_populationSize,
 			(void*)startPoints,
