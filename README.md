@@ -34,11 +34,7 @@ Space data values:
 See the [data](data) folder for examples of puzzle files with accompanying images.
 
 ## TODO
-Most of the work done so far has been on the host side to experiment with the problem space and create the `HostSolver` implementation for eventual timing comparisons against the `GeneticSolver`. The following items have not yet been implemented:
-- [ ] Host-side validation of black/white space partition constraints
-- [ ] OpenCL program/kernel/memory management in `GeneticSolver`
-- [ ] Genetic algorithm structure 
+Most of the core functionality has been implemented. Some stages of the genetic algorithm (initial generation and crossover/mutation) could be moved inside an OpenCL kernel for performance, but the basic structure is in place and works. The following items have not yet been implemented:
+- [ ] Host-side implementation of population crossover/mutation in `GeneticSolver`
 - [ ] OpenCL kernel implementation of random solution generation
-- [ ] OpenCL kernel implementation of solution fitness evaluation
 - [ ] OpenCL kernel implementation of population crossover/mutation
-- [ ] Timing comparison between `HostSolver` and `GeneticSolver` in `main`
