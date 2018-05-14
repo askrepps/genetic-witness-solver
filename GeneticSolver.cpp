@@ -360,7 +360,7 @@ namespace gws
 		// set sizes of local memory scratch space arrays for each work group
 		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 11, sizeof(bool)*m_numPuzzlePoints*LOCAL_WORK_SIZE, NULL);
 		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 12, sizeof(bool)*m_numPuzzleEdges*LOCAL_WORK_SIZE, NULL);
-		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 13, sizeof(unsigned char)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 13, sizeof(char)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
 		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 14, sizeof(bool)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
 		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 15, sizeof(bool)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
 		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 16, sizeof(unsigned char)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);

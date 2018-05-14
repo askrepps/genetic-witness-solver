@@ -73,6 +73,20 @@ unsigned int getPointCol(
 	return index%width;
 }
 
+unsigned int getSpaceRow(
+	const unsigned int index,
+	const unsigned int width)
+{
+	return index/(width - 1);
+}
+
+unsigned int getSpaceCol(
+	const unsigned int index,
+	const unsigned int width)
+{
+	return index%(width - 1);
+}
+
 unsigned int findStartIndex(
 	const unsigned char initialValue,
 	__constant const char* puzzlePoints,
@@ -254,7 +268,7 @@ __kernel void evaluatePopulation(
 	const unsigned int puzzleHeight,
 	__local bool* visitedPoints,
 	__local bool* visitedEdges,
-	__local unsigned char* spacePartitionNumbers,
+	__local char* spacePartitionNumbers,
 	__local bool* whitePartitions,
 	__local bool* blackPartitions,
 	__local unsigned char* searchStack,
@@ -391,7 +405,88 @@ __kernel void evaluatePopulation(
 			++move;
 		}
 		
-		// TODO: validate space parition constraints
+		// validate white/black space parition constraints
+		
+		// keep track of which partition each space belongs to
+		// and which partitions have white or black spaces
+		for (size_t i = 0; i < numSpaces; ++i) {
+			spacePartitionNumbers[localSpaceStartIndex + i] = -1;
+			whitePartitions[localSpaceStartIndex + i] = false;
+			blackPartitions[localSpaceStartIndex + i] = false;
+			searchStack[localSpaceStartIndex + i] = false;
+		}
+		
+		// run depth-first search until all spaces are partitioned
+		char currentPartition = 0;
+		unsigned int stackSize = 0;
+		unsigned int partitionedSpaces = 0;
+		while (partitionedSpaces < numSpaces) {
+			// find starting point for search
+			unsigned int spaceIndex = 0;
+			while (spacePartitionNumbers[localSpaceStartIndex + spaceIndex] >= 0) {
+				++spaceIndex;
+			}
+			
+			// index is guaranteed to be valid since when all
+			// spaces are assigned this loop won't execute
+			searchStack[localSpaceStartIndex + stackSize] = spaceIndex;
+			++stackSize;
+			
+			while (stackSize > 0) {
+				// pop space from stack
+				spaceIndex = searchStack[localSpaceStartIndex + stackSize - 1];
+				--stackSize;
+				
+				// assign partition number to current space and handle space value
+				spacePartitionNumbers[localSpaceStartIndex + spaceIndex] = currentPartition;
+				++partitionedSpaces;
+				switch (puzzleSpaces[spaceIndex]) {
+					case SPACE_WHITE:
+						whitePartitions[localSpaceStartIndex + currentPartition] = true;
+						break;
+					case SPACE_BLACK:
+						blackPartitions[localSpaceStartIndex + currentPartition] = true;
+						break;
+					default:
+						break;
+				}
+				
+				// check if reachable neighboring spaces need to be processed
+				unsigned int spaceRow = getSpaceRow(spaceIndex, puzzleWidth);
+				unsigned int spaceCol = getSpaceCol(spaceIndex, puzzleWidth);
+				
+				// space row/col coordinates correspond to the same coordinates of the upper-left point on the space
+				if (spaceRow > 0 && spacePartitionNumbers[localSpaceStartIndex + getSpaceIndex(spaceRow - 1, spaceCol, puzzleWidth)] == -1
+				                 && !visitedEdges[localEdgeStartIndex + getEdgeIndex(spaceRow, spaceCol, spaceRow, spaceCol + 1, puzzleWidth)]) {
+					searchStack[localSpaceStartIndex + stackSize] = getSpaceIndex(spaceRow - 1, spaceCol, puzzleWidth);
+					++stackSize;
+				}
+				if (spaceRow < puzzleHeight - 2 && spacePartitionNumbers[localSpaceStartIndex + getSpaceIndex(spaceRow + 1, spaceCol, puzzleWidth)] == -1
+				                               && !visitedEdges[localEdgeStartIndex + getEdgeIndex(spaceRow + 1, spaceCol, spaceRow + 1, spaceCol + 1, puzzleWidth)]) {
+					searchStack[localSpaceStartIndex + stackSize] = getSpaceIndex(spaceRow + 1, spaceCol, puzzleWidth);
+					++stackSize;
+				}
+				if (spaceCol > 0 && spacePartitionNumbers[localSpaceStartIndex + getSpaceIndex(spaceRow, spaceCol - 1, puzzleWidth)] == -1
+				                 && !visitedEdges[localEdgeStartIndex + getEdgeIndex(spaceRow, spaceCol, spaceRow + 1, spaceCol, puzzleWidth)]) {
+					searchStack[localSpaceStartIndex + stackSize] = getSpaceIndex(spaceRow, spaceCol - 1, puzzleWidth);
+					++stackSize;
+				}
+				if (spaceCol < puzzleWidth - 2 && spacePartitionNumbers[localSpaceStartIndex + getSpaceIndex(spaceRow, spaceCol + 1, puzzleWidth)] == -1
+				                              && !visitedEdges[localEdgeStartIndex + getEdgeIndex(spaceRow, spaceCol + 1, spaceRow + 1, spaceCol + 1, puzzleWidth)]) {
+					searchStack[localSpaceStartIndex + stackSize] = getSpaceIndex(spaceRow, spaceCol + 1, puzzleWidth);
+					++stackSize;
+				}
+			}
+			
+			++currentPartition;
+		}
+		
+		// each partition conflict loses one fitness point
+		for (size_t i = 0; i < numSpaces; ++i) {
+			if (whitePartitions[localSpaceStartIndex + i] && blackPartitions[localSpaceStartIndex + i]) {
+				--fitnessValue;
+			}
+		}
 		
 		fitness[gid] = fitnessValue;
 	}
