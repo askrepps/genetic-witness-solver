@@ -102,7 +102,7 @@ namespace gws
 			}
 			
 			if (m_numIterations % 100 == 0) {
-				std::cout << m_numIterations << " | current max: " << currentMaxFitness << " | path: " << paths + (maxMember*m_numPuzzlePoints) << std::endl;
+				std::cout << m_numIterations << " | current max: " << currentMaxFitness << " | start: " << startPoints[maxMember] << " | path: " << paths + (maxMember*m_numPuzzlePoints) << std::endl;
 			}
 			
 			// generate next population via crossover/mutation (TODO: move to device)
