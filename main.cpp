@@ -23,6 +23,7 @@ void runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& 
 	auto stop = std::chrono::high_resolution_clock::now();
 	float hostMs = std::chrono::duration<float>(stop - start).count()*1000.0f;
 	
+	std::cout << std::endl;
 	if (solutionFound) {
 		std::cout << "Puzzle solved on " << name << std::endl;
 		std::cout << "Starting row: " << puzzle.getPointRow(path.getStartPointIndex()) << " | Starting col: " << puzzle.getPointCol(path.getStartPointIndex()) << std::endl;
@@ -32,7 +33,6 @@ void runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& 
 		std::cout << "No puzzle solution found on " << name << std::endl;
 	}
 	std::cout << name << " execution time: " << hostMs << " ms" << std::endl;
-	std::cout << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	char* edgeData;
 	char* spaceData;
 	
-	std::cout << "Reading puzzle from " << puzzleFile << std::endl << std::endl;
+	std::cout << "Reading puzzle from " << puzzleFile << std::endl;
 	gws::Puzzle puzzle = gws::readPuzzle(puzzleFile, &pointData, &edgeData, &spaceData);
 	
 	// each point can only be visited once, so number of points can be used as the max path length
@@ -56,22 +56,23 @@ int main(int argc, char** argv)
 	gws::Path path(moveData, maxPathLength);
 	
 	// solve puzzle and display timing metrics
+	gws::HostSolver* hostSolver = new gws::HostSolver();
 	if (puzzle.getWidth() < 7 && puzzle.getHeight() < 7) {
-		gws::Solver* hostSolver = new gws::HostSolver();
 		runSolver(hostSolver, "CPU", puzzle, path);
-		
-		delete hostSolver;
+		std::cout << "CPU solution evaluations: " << puzzle.getNumEvals() << std::endl;
 	}
 	else {
 		std::cout << "Puzzle is too large to solve on host" << std::endl;
 	}
 	
-	gws::Solver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), 1024, 10);
+	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), 4096, 1000, 0);
 	runSolver(gpuSolver, "GPU", puzzle, path);
+	std::cout << "GPU population generations: " << gpuSolver->getNumIterations() << std::endl;
 	
+	// clean up memory
+	delete hostSolver;
 	delete gpuSolver;
 	
-	// clean up puzzle/path memory
 	delete [] pointData;
 	delete [] edgeData;
 	delete [] spaceData;
