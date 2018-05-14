@@ -137,7 +137,9 @@ namespace gws
 							size_t destinationIndex = i*m_numPuzzlePoints + j;
 							size_t parentIndex1 = destinationIndex;
 							size_t parentIndex2 = mate*m_numPuzzlePoints + j;
-							if (j < crossoverPoint) {
+							
+							// "mate" is more likely to have a high fitness, so use it as the starting parent
+							if (j > crossoverPoint) {
 								population[destinationIndex] = population[parentIndex1];
 							}
 							else {
