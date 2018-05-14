@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 		std::cout << "Puzzle is too large to solve on host" << std::endl;
 	}
 	
-	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), 16384, 100000, 0.75, 0.01, 0);
+	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), 8192, 1000000, 0.75, 0.1, 0);
 	runSolver(gpuSolver, "GPU", puzzle, path);
 	std::cout << "GPU population generations: " << gpuSolver->getNumIterations() << std::endl;
 	
