@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	
 	// solve puzzle and display timing metrics
 	gws::HostSolver* hostSolver = new gws::HostSolver();
-	if (puzzle.getWidth() < 7 && puzzle.getHeight() < 7) {
+	if (puzzle.getWidth() < 7 || puzzle.getHeight() < 7) {
 		runSolver(hostSolver, "CPU", puzzle, path);
 		std::cout << "CPU solution evaluations: " << puzzle.getNumEvals() << std::endl;
 	}
