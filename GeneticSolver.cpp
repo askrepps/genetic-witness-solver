@@ -23,7 +23,7 @@
 
 namespace gws
 {
-	GeneticSolver::GeneticSolver(size_t puzzleWidth, size_t puzzleHeight, size_t populationSize, size_t maxIterations, unsigned int seed)
+	GeneticSolver::GeneticSolver(size_t puzzleWidth, size_t puzzleHeight, size_t populationSize, size_t maxIterations, float crossoverRate, float mutationRate, unsigned int seed)
 		: m_puzzleWidth(puzzleWidth),
 		  m_puzzleHeight(puzzleHeight),
 		  m_numPuzzlePoints(Puzzle::getNumPoints(puzzleWidth, puzzleHeight)),
@@ -31,6 +31,8 @@ namespace gws
 		  m_numPuzzleSpaces(Puzzle::getNumSpaces(puzzleWidth, puzzleHeight)),
 		  m_populationSize(populationSize),
 		  m_maxIterations(maxIterations),
+		  m_crossoverRate(crossoverRate),
+		  m_mutationRate(mutationRate),
 		  m_seed(seed)
 	{
 		// initialize OpenCL components
@@ -51,9 +53,8 @@ namespace gws
 		transferPuzzleData(puzzle);
 		
 		// find the max fitness value of the puzzle
-		int maxFitness = calcMaxFitness(puzzle);
-		//std::cout << "Max fitness is " << maxFitness << std::endl;
-		
+		int maxPuzzleFitness = calcMaxFitness(puzzle);
+		std::cout << "Max puzzle fitness is " << maxPuzzleFitness << std::endl;
 		// seed random number generator
 		srand(m_seed);
 		
@@ -70,25 +71,88 @@ namespace gws
 		int* fitness = new int[m_populationSize];
 		unsigned int* startPoints = new unsigned int[m_populationSize];
 		char* paths = new char[totalPopulationBytes];
+		size_t maxMember = 0;
 		while (!solutionFound && m_numIterations < m_maxIterations) {
 			runEvaluationKernel(population, fitness, startPoints, paths);
 			
 			// check for correct solution (break early if solution found)
 			size_t currentMember = 0;
+			int totalFitness = 0;
+			int currentFitness = 0;
+			int currentMinFitness = INT_MAX;
+			int currentMaxFitness = INT_MIN;
 			while (!solutionFound && currentMember < m_populationSize) {
-				//std::cout << "Fitness: " << fitness[currentMember] << " | Start Point: " << startPoints[currentMember] << " | Path: " << (paths + (currentMember*m_numPuzzlePoints)) << std::endl;
-				if (fitness[currentMember] == maxFitness) {
+				currentFitness = fitness[currentMember];
+				if (currentFitness == maxPuzzleFitness) {
 					fillPath(paths, startPoints, currentMember, m_numPuzzlePoints, path);
 					solutionFound = true;
+				}
+				
+				// collect fitness metrics to assist with crossover phase
+				totalFitness += currentFitness;
+				if (currentFitness < currentMinFitness) {
+					currentMinFitness = currentFitness;
+				}
+				if (currentFitness > currentMaxFitness) {
+					currentMaxFitness = currentFitness;
+					maxMember = currentMember;
 				}
 				
 				++currentMember;
 			}
 			
-			// generate next population
+			if (m_numIterations % 100 == 0) {
+				std::cout << m_numIterations << " | current max: " << currentMaxFitness << " | path: " << paths + (maxMember*m_numPuzzlePoints) << std::endl;
+			}
+			
+			// generate next population via crossover/mutation (TODO: move to device)
 			if (!solutionFound) {
+				// normalize fitness so that all values are positive
+				// (need at least 1 to have chance of being chosen)
+				totalFitness = totalFitness - currentMinFitness + 1;
+				
+				// randomly crossover population according to crossover rate
+				for (size_t i = 0; i < m_populationSize; ++i) {
+					float crossoverDecision = (float)rand()/RAND_MAX;
+					if (crossoverDecision <= m_crossoverRate) {
+						size_t mate = 0;
+						float fitnessCount = 0.0f;
+						float fitnessDecision = ((float)rand()/RAND_MAX)*totalFitness;
+						bool mateFound = false;
+						while (!mateFound && mate < m_populationSize) {
+							// normalize fitness so that all values are positive
+							// (need at least 1 to have chance of being chosen)
+							fitnessCount += fitness[mate] - currentMinFitness + 1;
+							if (fitnessCount >= fitnessDecision) {
+								mateFound = true;
+							}
+							else {
+								++mate;
+							}
+						}
+						
+						// perform single-point crossover
+						size_t crossoverPoint = rand()%m_numPuzzlePoints;
+						for (size_t j = 0; j < m_numPuzzlePoints; ++j) {
+							size_t destinationIndex = i*m_numPuzzlePoints + j;
+							size_t parentIndex1 = destinationIndex;
+							size_t parentIndex2 = mate*m_numPuzzlePoints + j;
+							if (j < crossoverPoint) {
+								population[destinationIndex] = population[parentIndex1];
+							}
+							else {
+								population[destinationIndex] = population[parentIndex2];
+							}
+						}
+					}
+				}
+				
+				// randomly mutate population according to mutation rate
 				for (size_t i = 0; i < totalPopulationBytes; ++i) {
-					population[i] = (unsigned char)(rand() % UCHAR_MAX);
+					float mutationDecision = (float)rand()/RAND_MAX;
+					if (mutationDecision <= m_mutationRate) {
+						population[i] = (unsigned char)(rand() % UCHAR_MAX);
+					}
 				}
 			}
 			

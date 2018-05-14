@@ -30,7 +30,14 @@ namespace gws
 	class GeneticSolver : public Solver
 	{
 	public:
-		GeneticSolver(size_t puzzleWidth, size_t puzzleHeight, size_t populationSize, size_t maxIterations, unsigned int seed);
+		GeneticSolver(
+			size_t puzzleWidth,
+			size_t puzzleHeight,
+			size_t populationSize,
+			size_t maxIterations,
+			float crossoverRate,
+			float mutationRate,
+			unsigned int seed);
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Virtual destructor
@@ -39,7 +46,7 @@ namespace gws
 		
 		// prevent creating copies of the solver
 		GeneticSolver(const GeneticSolver& other) = delete;
-		GeneticSolver& operator=(const GeneticSolver* other) = delete;
+		GeneticSolver& operator=(const GeneticSolver& other) = delete;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \copydoc Solver::solvePuzzle()
@@ -62,6 +69,8 @@ namespace gws
 		
 		size_t m_populationSize;
 		size_t m_maxIterations;
+		float m_crossoverRate;
+		float m_mutationRate;
 		unsigned int m_seed;
 		
 		size_t m_numIterations;
