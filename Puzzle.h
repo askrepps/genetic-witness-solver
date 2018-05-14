@@ -111,13 +111,6 @@ namespace gws
 		Puzzle(size_t w, size_t h, const char* pointData, const char* edgeData, const char* spaceData);
 		
 		///////////////////////////////////////////////////////////////////////
-		/// \brief Get the number of times evaluateSolution() was called
-		/// 
-		/// \returns the number of solution evaluations
-		///////////////////////////////////////////////////////////////////////
-		size_t getNumEvals() const;
-		
-		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the width of the puzzle
 		/// 
 		/// \returns the number of points per row
@@ -130,6 +123,27 @@ namespace gws
 		/// \returns the number of points per column
 		///////////////////////////////////////////////////////////////////////
 		size_t getHeight() const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the raw puzzle point data
+		/// 
+		/// \returns the pointer to the puzzle's point buffer
+		///////////////////////////////////////////////////////////////////////
+		const char* getPointData() const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the raw puzzle edge data
+		/// 
+		/// \returns the pointer to the puzzle's edge buffer
+		///////////////////////////////////////////////////////////////////////
+		const char* getEdgeData() const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the raw puzzle space data
+		/// 
+		/// \returns the pointer to the puzzle's space buffer
+		///////////////////////////////////////////////////////////////////////
+		const char* getSpaceData() const;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the number of intersection points in the puzzle
@@ -183,6 +197,9 @@ namespace gws
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Get the index of an edge between two points
 		/// 
+		/// The point at row1/col1 is assumed to be directly above or to the
+		/// left of the point at row2/col2.
+		///
 		/// \param [in] row1 the first point row (in range [0..h-1])
 		/// \param [in] col1 the first point column (in range [0..w-1])
 		/// \param [in] row2 the second point row (in range [0..h-1])
@@ -279,6 +296,13 @@ namespace gws
 		/// \returns the value of the given point
 		///////////////////////////////////////////////////////////////////////
 		SpaceValue getSpaceValue(size_t index) const;
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the number of times evaluateSolution() was called
+		/// 
+		/// \returns the number of solution evaluations
+		///////////////////////////////////////////////////////////////////////
+		size_t getNumEvals() const;
 		
 		///////////////////////////////////////////////////////////////////////
 		/// \brief Check if a path is a vlid solution to the puzzle

@@ -10,25 +10,33 @@
 #include "Path.h"
 #include "Puzzle.h"
 
+#include <climits>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
 #include <string>
 
+// selected to fit under local memory size constraints
+#define LOCAL_WORK_SIZE 32
+
 namespace gws
 {
-	GeneticSolver::GeneticSolver(size_t puzzleWidth, size_t puzzleHeight, size_t populationSize, size_t maxIterations)
-		: m_populationSize(populationSize),
-		  m_maxIterations(maxIterations),
+	GeneticSolver::GeneticSolver(size_t puzzleWidth, size_t puzzleHeight, size_t populationSize, size_t maxIterations, unsigned int seed)
+		: m_puzzleWidth(puzzleWidth),
+		  m_puzzleHeight(puzzleHeight),
 		  m_numPuzzlePoints(Puzzle::getNumPoints(puzzleWidth, puzzleHeight)),
 		  m_numPuzzleEdges(Puzzle::getNumEdges(puzzleWidth, puzzleHeight)),
-		  m_numPuzzleSpaces(Puzzle::getNumSpaces(puzzleWidth, puzzleHeight))
+		  m_numPuzzleSpaces(Puzzle::getNumSpaces(puzzleWidth, puzzleHeight)),
+		  m_populationSize(populationSize),
+		  m_maxIterations(maxIterations),
+		  m_seed(seed)
 	{
 		// initialize OpenCL components
 		initDeviceContextAndQueue();
-		initProgramAndKernels();
 		initBuffers();
+		initProgramAndKernels();
 	}
 	
 	GeneticSolver::~GeneticSolver()
@@ -39,24 +47,112 @@ namespace gws
 	
 	bool GeneticSolver::solvePuzzle(const Puzzle& puzzle, Path& path)
 	{
-		// TODO: find solution
-		return false;
+		// transfer puzzle data to device
+		transferPuzzleData(puzzle);
+		
+		// find the max fitness value of the puzzle
+		int maxFitness = calcMaxFitness(puzzle);
+		//std::cout << "Max fitness is " << maxFitness << std::endl;
+		
+		// seed random number generator
+		srand(m_seed);
+		
+		// randomly generate initial population (TODO: move to deivce)
+		size_t totalPopulationBytes = m_populationSize*m_numPuzzlePoints;
+		unsigned char* population = new unsigned char[totalPopulationBytes];
+		for (size_t i = 0; i < totalPopulationBytes; ++i) {
+			population[i] = (unsigned char)(rand() % UCHAR_MAX);
+		}
+		
+		// iterate over each generation until a correct solution is found or max iterations is reached
+		bool solutionFound = false;
+		m_numIterations = 0;
+		int* fitness = new int[m_populationSize];
+		unsigned int* startPoints = new unsigned int[m_populationSize];
+		char* paths = new char[totalPopulationBytes];
+		while (!solutionFound && m_numIterations < m_maxIterations) {
+			runEvaluationKernel(population, fitness, startPoints, paths);
+			
+			// check for correct solution (break early if solution found)
+			size_t currentMember = 0;
+			while (!solutionFound && currentMember < m_populationSize) {
+				//std::cout << "Fitness: " << fitness[currentMember] << " | Start Point: " << startPoints[currentMember] << " | Path: " << (paths + (currentMember*m_numPuzzlePoints)) << std::endl;
+				if (fitness[currentMember] == maxFitness) {
+					fillPath(paths, startPoints, currentMember, m_numPuzzlePoints, path);
+					solutionFound = true;
+				}
+				
+				++currentMember;
+			}
+			
+			// generate next population
+			if (!solutionFound) {
+				for (size_t i = 0; i < totalPopulationBytes; ++i) {
+					population[i] = (unsigned char)(rand() % UCHAR_MAX);
+				}
+			}
+			
+			++m_numIterations;
+		}
+		
+		delete [] population;
+		delete [] fitness;
+		delete [] startPoints;
+		delete [] paths;
+		
+		return solutionFound;
 	}
 	
-	void GeneticSolver::runGenerateKernel(cl_mem outputPopulationBuffer)
+	size_t GeneticSolver::getNumIterations() const
 	{
-		// TODO: run population generation kernel
+		return m_numIterations;
 	}
 	
-	bool GeneticSolver::runEvaluationKernel(cl_mem inputPopulationBuffer)
+	int GeneticSolver::calcMaxFitness(const Puzzle& puzzle) const
 	{
-		// TODO: run fitness evalulation kernel
-		return false;
+		// start with 1 fitness point for reaching the end
+		int maxFitness = 1;
+		
+		// count dot constraints (each dot is 1 fitness point)
+		for (size_t i = 0; i < m_numPuzzlePoints; ++i) {
+			if (puzzle.getPointValue(i) == PointValue::DOT) {
+				++maxFitness;
+			}
+		}
+		for (size_t i = 0; i < m_numPuzzleEdges; ++i) {
+			if (puzzle.getEdgeValue(i) == EdgeValue::DOT) {
+				++maxFitness;
+			}
+		}
+		
+		// space partition constraints are counted as negative
+		// fitness for violations so no need to check here
+		return maxFitness;
 	}
 	
-	void GeneticSolver::runCrossoverMutationKernel(cl_mem inputPopulationBuffer, cl_mem outputPopulationBuffer)
+	void GeneticSolver::fillPath(const char* paths, const unsigned int* startPoints, size_t member, size_t maxLength, Path& path) const
 	{
-		// TODO: run crossover/mutation kernel to generate next population
+		// clear out path
+		path.clear();
+		
+		// set start point
+		path.setStartPointIndex(startPoints[member]);
+		
+		// extract path data
+		size_t startIndex = member*maxLength;
+		size_t i = 0;
+		bool morePath = true;
+		while (i < maxLength && morePath) {
+			MoveValue value = (MoveValue)paths[startIndex + i];
+			if (value != MoveValue::NONE) {
+				path.addMove(value);
+			}
+			else {
+				morePath = false;
+			}
+			
+			++i;
+		}
 	}
 	
 	void GeneticSolver::initDeviceContextAndQueue()
@@ -131,6 +227,68 @@ namespace gws
 		checkLastErr("clCreateCommandQueue");
 	}
 	
+	void GeneticSolver::initBuffers()
+	{
+		// create read-only buffers to hold constant puzzle data
+		m_puzzlePointBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_READ_ONLY,
+			sizeof(char)*m_numPuzzlePoints,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		m_puzzleEdgeBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_READ_ONLY,
+			sizeof(char)*m_numPuzzleEdges,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		m_puzzleSpaceBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_READ_ONLY,
+			sizeof(char)*m_numPuzzleSpaces,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		// create buffers to store populations (path solutions) and fitness results
+		// (max path length is the number of puzzle points)
+		m_populationBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_READ_ONLY,
+			sizeof(unsigned char)*m_numPuzzlePoints*m_populationSize,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		m_fitnessBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_WRITE_ONLY,
+			sizeof(int)*m_populationSize,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		m_startPointBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_WRITE_ONLY,
+			sizeof(unsigned int)*m_populationSize,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+		
+		m_pathsBuffer = clCreateBuffer(
+			m_context,
+			CL_MEM_WRITE_ONLY,
+			sizeof(char)*m_numPuzzlePoints*m_populationSize,
+			NULL,
+			&m_lastErrNum);
+		checkLastErr("clCreateBuffer");
+	}
+	
 	void GeneticSolver::initProgramAndKernels()
 	{
 		std::ifstream srcFile("GeneticSolver.cl");
@@ -179,64 +337,147 @@ namespace gws
 			checkLastErr("clBuildProgram");
 		}
 		
-		// TODO: create kernels and set fixed kernel arguments
-		m_generateKernel = 0;
-		m_evaluateKernel = 0;
-		m_crossoverMutateKernel = 0;
+		// create kernel
+		m_evaluateKernel = clCreateKernel(
+			m_program,
+			"evaluatePopulation",
+			&m_lastErrNum);
+		checkLastErr("clCreateKernel");
+		
+		// set input arguments
+		m_lastErrNum = clSetKernelArg(m_evaluateKernel, 0, sizeof(cl_mem), &m_populationBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 1, sizeof(unsigned int), &m_populationSize);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 2, sizeof(unsigned int), &m_numPuzzlePoints);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 3, sizeof(cl_mem), &m_puzzlePointBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 4, sizeof(cl_mem), &m_puzzleEdgeBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 5, sizeof(cl_mem), &m_puzzleSpaceBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 6, sizeof(unsigned int), &m_numPuzzlePoints);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 7, sizeof(unsigned int), &m_numPuzzleEdges);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 8, sizeof(unsigned int), &m_numPuzzleSpaces);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 9, sizeof(unsigned int), &m_puzzleWidth);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 10, sizeof(unsigned int), &m_puzzleHeight);
+		
+		// set sizes of local memory scratch space arrays for each work group
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 11, sizeof(bool)*m_numPuzzlePoints*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 12, sizeof(bool)*m_numPuzzleEdges*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 13, sizeof(unsigned char)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 14, sizeof(bool)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 15, sizeof(bool)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 16, sizeof(unsigned char)*m_numPuzzleSpaces*LOCAL_WORK_SIZE, NULL);
+		
+		// set output arguments
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 17, sizeof(cl_mem), &m_fitnessBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 18, sizeof(cl_mem), &m_startPointBuffer);
+		m_lastErrNum |= clSetKernelArg(m_evaluateKernel, 19, sizeof(cl_mem), &m_pathsBuffer);
+		
+		checkLastErr("clSetKernelArg");
 	}
 	
-	void GeneticSolver::initBuffers()
+	void GeneticSolver::transferPuzzleData(const Puzzle& puzzle)
 	{
-		// create read-only buffers to hold constant puzzle data
-		m_puzzlePointBuffer = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_ONLY,
+		m_lastErrNum = clEnqueueWriteBuffer(
+			m_queue,
+			m_puzzlePointBuffer,
+			CL_TRUE,
+			0,
 			sizeof(char)*m_numPuzzlePoints,
+			(void*)puzzle.getPointData(),
+			0,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
+			NULL);
+		checkLastErr("clEnqueueWriteBuffer");
 		
-		m_puzzleEdgeBuffer = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_ONLY,
+		m_lastErrNum = clEnqueueWriteBuffer(
+			m_queue,
+			m_puzzleEdgeBuffer,
+			CL_TRUE,
+			0,
 			sizeof(char)*m_numPuzzleEdges,
+			(void*)puzzle.getEdgeData(),
+			0,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
+			NULL);
+		checkLastErr("clEnqueueWriteBuffer");
 		
-		m_puzzleSpaceBuffer = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_ONLY,
+		m_lastErrNum = clEnqueueWriteBuffer(
+			m_queue,
+			m_puzzleSpaceBuffer,
+			CL_TRUE,
+			0,
 			sizeof(char)*m_numPuzzleSpaces,
+			(void*)puzzle.getSpaceData(),
+			0,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
-		
-		// create buffers to store populations (path solutions) and fitness results
-		// (max path length is the number of puzzle points)
-		m_populationBuffer1 = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_WRITE,
-			sizeof(unsigned char)*m_numPuzzlePoints*m_populationSize,
+			NULL);
+		checkLastErr("clEnqueueWriteBuffer");
+	}
+	
+	void GeneticSolver::runEvaluationKernel(const unsigned char* population, int* fitness, unsigned int* startPoints, char* paths)
+	{
+		// copy current population to device
+		m_lastErrNum = clEnqueueWriteBuffer(
+			m_queue,
+			m_populationBuffer,
+			CL_TRUE,
+			0,
+			sizeof(unsigned char)*m_populationSize*m_numPuzzlePoints,
+			(void*)population,
+			0,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
+			NULL);
+		checkLastErr("clEnqueueWriteBuffer");
 		
-		m_populationBuffer2 = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_WRITE,
-			sizeof(unsigned char)*m_numPuzzlePoints*m_populationSize,
+		// run kernel
+		size_t globalWorkSize[1] = { m_populationSize };
+		size_t localWorkSize[1] = { LOCAL_WORK_SIZE };
+		m_lastErrNum = clEnqueueNDRangeKernel(
+			m_queue,
+			m_evaluateKernel,
+			1,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
+			globalWorkSize,
+			localWorkSize,
+			0,
+			NULL,
+			NULL);
+		checkLastErr("clEnqueueNDRangeKernel");
 		
-		m_fitnessBuffer = clCreateBuffer(
-			m_context,
-			CL_MEM_READ_WRITE,
+		// copy fitness and path results back to host
+		m_lastErrNum = clEnqueueReadBuffer(
+			m_queue,
+			m_fitnessBuffer,
+			CL_TRUE,
+			0,
+			sizeof(int)*m_populationSize,
+			(void*)fitness,
+			0,
+			NULL,
+			NULL);
+		checkLastErr("clEnqueueReadBuffer");
+		
+		m_lastErrNum = clEnqueueReadBuffer(
+			m_queue,
+			m_startPointBuffer,
+			CL_TRUE,
+			0,
 			sizeof(unsigned int)*m_populationSize,
+			(void*)startPoints,
+			0,
 			NULL,
-			&m_lastErrNum);
-		checkLastErr("clCreateBuffer");
+			NULL);
+		checkLastErr("clEnqueueReadBuffer");
+		
+		m_lastErrNum = clEnqueueReadBuffer(
+			m_queue,
+			m_pathsBuffer,
+			CL_TRUE,
+			0,
+			sizeof(char)*m_populationSize*m_numPuzzlePoints,
+			(void*)paths,
+			0,
+			NULL,
+			NULL);
+		checkLastErr("clEnqueueReadBuffer");
 	}
 	
 	void GeneticSolver::cleanup()
@@ -251,14 +492,14 @@ namespace gws
 		if (m_puzzleSpaceBuffer != 0) {
 			clReleaseMemObject(m_puzzleSpaceBuffer);
 		}
-		if (m_populationBuffer1 != 0) {
-			clReleaseMemObject(m_populationBuffer1);
-		}
-		if (m_populationBuffer2 != 0) {
-			clReleaseMemObject(m_populationBuffer2);
+		if (m_populationBuffer != 0) {
+			clReleaseMemObject(m_populationBuffer);
 		}
 		if (m_fitnessBuffer != 0) {
 			clReleaseMemObject(m_fitnessBuffer);
+		}
+		if (m_pathsBuffer != 0) {
+			clReleaseMemObject(m_pathsBuffer);
 		}
 		
 		// clean up command queue
@@ -266,18 +507,10 @@ namespace gws
 			clReleaseCommandQueue(m_queue);
 		}
 		
-		// clean up kernels
-		if (m_generateKernel != 0) {
-			clReleaseKernel(m_generateKernel);
-		}
+		// clean up kernel and program
 		if (m_evaluateKernel != 0) {
 			clReleaseKernel(m_evaluateKernel);
 		}
-		if (m_crossoverMutateKernel != 0) {
-			clReleaseKernel(m_crossoverMutateKernel);
-		}
-		
-		// clean up program
 		if (m_program != 0) {
 			clReleaseProgram(m_program);
 		}

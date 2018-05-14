@@ -31,14 +31,7 @@ namespace gws
 	
 	Puzzle::Puzzle(size_t w, size_t h, const char* pointData, const char* edgeData, const char* spaceData)
 		: m_width(w), m_height(h), m_pointData(pointData), m_edgeData(edgeData), m_spaceData(spaceData), m_numEvals(0)
-	{
-		// TODO: assert width/height at least 2, at least one start/end
-	}
-	
-	size_t Puzzle::getNumEvals() const
-	{
-		return m_numEvals;
-	}
+	{}
 	
 	size_t Puzzle::getWidth() const
 	{
@@ -48,6 +41,21 @@ namespace gws
 	size_t Puzzle::getHeight() const
 	{
 		return m_height;
+	}
+	
+	const char* Puzzle::getPointData() const
+	{
+		return m_pointData;
+	}
+	
+	const char* Puzzle::getEdgeData() const
+	{
+		return m_edgeData;
+	}
+	
+	const char* Puzzle::getSpaceData() const
+	{
+		return m_spaceData;
 	}
 	
 	size_t Puzzle::getNumPoints() const
@@ -67,26 +75,21 @@ namespace gws
 	
 	size_t Puzzle::getPointIndex(size_t row, size_t col) const
 	{
-		// TODO: assert row/col in range
 		return row*m_width + col;
 	}
 	
 	size_t Puzzle::getPointRow(size_t index) const
 	{
-		// TODO: assert index in range
 		return index/m_width;
 	}
 	
 	size_t Puzzle::getPointCol(size_t index) const
 	{
-		// TODO: assert index in range
 		return index%m_width;
 	}
 	
 	size_t Puzzle::getEdgeIndex(size_t row1, size_t col1, size_t row2, size_t col2) const
 	{
-		// TODO: assert row/col in range and point1 is above or left of point2
-		
 		// each row grouping contains w-1 horizontal edges followed by w vertical edges
 		size_t index = row1*(m_width*2 - 1) + col1;
 		if (col1 == col2) {
@@ -98,19 +101,16 @@ namespace gws
 	
 	size_t Puzzle::getSpaceIndex(size_t row, size_t col) const
 	{
-		// TODO: assert row/col in range
 		return row*(m_width - 1) + col;
 	}
 	
 	size_t Puzzle::getSpaceRow(size_t index) const
 	{
-		// TODO: assert index in range
 		return index/(m_width - 1);
 	}
 	
 	size_t Puzzle::getSpaceCol(size_t index) const
 	{
-		// TODO: assert index in range
 		return index%(m_width - 1);
 	}
 	
@@ -121,7 +121,6 @@ namespace gws
 	
 	PointValue Puzzle::getPointValue(size_t index) const
 	{
-		// TODO: assert index in range
 		return (PointValue)m_pointData[index];
 	}
 	
@@ -132,7 +131,6 @@ namespace gws
 	
 	EdgeValue Puzzle::getEdgeValue(size_t index) const
 	{
-		// TODO: assert index in range
 		return (EdgeValue)m_edgeData[index];
 	}
 	
@@ -143,8 +141,12 @@ namespace gws
 	
 	SpaceValue Puzzle::getSpaceValue(size_t index) const
 	{
-		// TODO: assert index in range
 		return (SpaceValue)m_spaceData[index];
+	}
+	
+	size_t Puzzle::getNumEvals() const
+	{
+		return m_numEvals;
 	}
 	
 	bool Puzzle::evaluateSolution(const Path& path) const
