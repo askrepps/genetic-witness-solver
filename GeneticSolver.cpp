@@ -191,8 +191,13 @@ namespace gws
 			}
 		}
 		
-		// space partition constraints are counted as negative
-		// fitness for violations so no need to check here
+		// count space constraints (each white/black space is 1 fitness point)
+		for (size_t i = 0; i < m_numPuzzleSpaces; ++i) {
+			if (puzzle.getSpaceValue(i) == SpaceValue::WHITE || puzzle.getSpaceValue(i) == SpaceValue::BLACK) {
+				++maxFitness;
+			}
+		}
+		
 		return maxFitness;
 	}
 	

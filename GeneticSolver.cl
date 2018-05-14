@@ -481,10 +481,22 @@ __kernel void evaluatePopulation(
 			++currentPartition;
 		}
 		
-		// each partition conflict loses one fitness point
+		// each white/black space in a valid partition earns 1 fitness point
 		for (size_t i = 0; i < numSpaces; ++i) {
-			if (whitePartitions[localSpaceStartIndex + i] && blackPartitions[localSpaceStartIndex + i]) {
-				--fitnessValue;
+			char partition = spacePartitionNumbers[localSpaceStartIndex + i];
+			switch (puzzleSpaces[i]) {
+				case SPACE_WHITE:
+					if (whitePartitions[localSpaceStartIndex + partition] && !blackPartitions[localSpaceStartIndex + partition]) {
+						++fitnessValue;
+					}
+					break;
+				case SPACE_BLACK:
+					if (blackPartitions[localSpaceStartIndex + partition] && !whitePartitions[localSpaceStartIndex + partition]) {
+						++fitnessValue;
+					}
+					break;
+				default:
+					break;
 			}
 		}
 		
