@@ -49,6 +49,8 @@ bool runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& 
 		std::cout << "No puzzle solution found on " << name << std::endl;
 	}
 	std::cout << name << " execution time: " << ms << " ms" << std::endl;
+	
+	return solutionFound;
 }
 
 int main(int argc, char** argv)
