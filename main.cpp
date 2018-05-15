@@ -82,6 +82,7 @@ int main(int argc, char** argv)
 	else {
 		std::cout << "Puzzle is too large to solve on host" << std::endl;
 	}
+	std::cout << std::endl;
 	
 	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), POPULATION_SIZE,
 	                                                       MAX_ITERATIONS, CROSSOVER_RATE, MUTATION_RATE, RANDOM_SEED);
