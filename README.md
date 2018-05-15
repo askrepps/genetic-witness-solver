@@ -8,6 +8,8 @@ GPU-accelerated Witness puzzle solver using genetic algorithms (EN.605.417.SP18 
 ## Usage
 To run the program, simply run `build/genWitnessSolver <puzzle file>` where `<puzzle file>` is the path to a text file containing the puzzle description
 
+A run.sh script is also included so that you can quickly compile the program and run through some sample puzzle test cases.
+
 ## Puzzle File Format
 A puzzle file is a text file with the following contents:
 1. A line containing the width of the puzzle (the number of points per row)
