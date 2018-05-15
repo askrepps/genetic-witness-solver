@@ -93,20 +93,71 @@ namespace gws
 		cl_mem m_startPointBuffer;
 		cl_mem m_pathsBuffer;
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Get the maximum possible fitness score for a puzzle
+		/// 
+		/// \param [in] puzzle the puzzle
+		/// 
+		/// \returns the max fitness of the puzzle
+		///////////////////////////////////////////////////////////////////////
 		int calcMaxFitness(const Puzzle& puzzle) const;
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Fill a path with the solution output from a given member
+		/// of the population
+		/// 
+		/// \param [in] paths the output path data for the population
+		/// \param [in] startPoints the selected start points
+		/// \param [in] member the population member index
+		/// \param [in] maxLength the max length of each member's path
+		/// \param [out] path the output path
+		///////////////////////////////////////////////////////////////////////
 		void fillPath(const char* paths, const unsigned int* startPoints, size_t member, size_t maxLength, Path& path) const;
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Initialize OpenCL device, context, and command queue
+		///////////////////////////////////////////////////////////////////////
 		void initDeviceContextAndQueue();
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Initialize OpenCL memory buffers required by the solver
+		///////////////////////////////////////////////////////////////////////
 		void initBuffers();
+		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Compile OpenCL program and create kernel object
+		///////////////////////////////////////////////////////////////////////
 		void initProgramAndKernels();
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Transfer puzzle data to OpenCL constant memory
+		/// 
+		/// \param [in] puzzle the puzzle
+		///////////////////////////////////////////////////////////////////////
 		void transferPuzzleData(const Puzzle& puzzle);
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Run a single iteration of the fitness evaluation kernel
+		/// 
+		/// \param [in] population the population data
+		/// \param [out] fitness the calculated fitness values for each member
+		/// \param [out] startPoints the selected start points
+		/// \param [out] paths the generated solution paths
+		///////////////////////////////////////////////////////////////////////
 		void runEvaluationKernel(const unsigned char* population, int* fitness, unsigned int* startPoints, char* paths);
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Clean up all OpenCL memory and resources
+		///////////////////////////////////////////////////////////////////////
 		void cleanup();
 		
+		///////////////////////////////////////////////////////////////////////
+		/// \brief Check if an error occured during the last operation
+		/// 
+		/// \param [in] name the operation name
+		/// 
+		/// \throws std::runtime_error if an error occurred
+		///////////////////////////////////////////////////////////////////////
 		void checkLastErr(const std::string& name) const;
 	};
 }

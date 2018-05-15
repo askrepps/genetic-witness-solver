@@ -26,6 +26,8 @@
 #define MOVE_RIGHT 'r'
 #define MOVE_NONE '\0'
 
+// helper functions for calculating puzzle buffer indicies
+
 unsigned int getPointIndex(
 	const unsigned int row,
 	const unsigned int col,
@@ -87,6 +89,8 @@ unsigned int getSpaceCol(
 	return index%(width - 1);
 }
 
+// use the first random value in a population member's data
+// to select which starting point to use in the puzzle
 unsigned int findStartIndex(
 	const unsigned char initialValue,
 	__constant const char* puzzlePoints,
@@ -107,6 +111,7 @@ unsigned int findStartIndex(
 	return index;
 }
 
+// helper method that simplifies getting the index of an edge
 unsigned int getNextEdge(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -127,6 +132,7 @@ unsigned int getNextEdge(
 	return nextEdge;
 }
 
+// check if a move from one point to the next is valid
 bool checkMove(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -154,6 +160,7 @@ bool checkMove(
 	    && !visitedPoints[localPointStartIndex + nextPoint];
 }
 
+// check if a move from the current point upward is valid
 bool checkMoveUp(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -179,6 +186,7 @@ bool checkMoveUp(
 		localPointStartIndex);
 }
 
+// check if a move from the current point downward is valid
 bool checkMoveDown(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -204,6 +212,7 @@ bool checkMoveDown(
 		localPointStartIndex);
 }
 
+// check if a move from the current point leftward is valid
 bool checkMoveLeft(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -229,6 +238,7 @@ bool checkMoveLeft(
 		localPointStartIndex);
 }
 
+// check if a move from the current point rightward is valid
 bool checkMoveRight(
 	const unsigned int currentRow,
 	const unsigned int currentCol,
@@ -254,6 +264,36 @@ bool checkMoveRight(
 		localPointStartIndex);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Calculate solution fitness on a population
+/// 
+/// \param [in] population the random population data
+/// \param [in] popSize the poulation size
+/// \param [in] maxLength the max length of each population member's data
+/// \param [in] puzzlePoints the puzzle point buffer
+/// \param [in] puzzleEdges the puzzle edge buffer
+/// \param [in] puzzleSpaces the puzzle space buffer
+/// \param [in] numPoints the number of points in the puzzle
+/// \param [in] numEdges the number of edges in the puzzle
+/// \param [in] numSpaces the number of spaces in the puzzle
+/// \param [in] puzzleWidth the width of the puzzle (points per row)
+/// \param [in] puzzleHeight the height of the puzzle (points per column)
+/// 
+/// \param [in] visitedPoints local scratch space for keeping track of points
+/// \param [in] visitedEdges local scratch space for keeping track of edges
+/// \param [in] spacePartitionNumbers local scratch space for keeping track of
+/// partitions
+/// \param [in] whitePartitions local scratch space for keeping track of which
+/// partitions contain white spaces
+/// \param [in] blackPartitions local scratch space for keeping track of which
+/// partitions contain black spaces
+/// \param [in] searchStack local scratch space to use as a stack during
+/// depth-first search during space partitioning
+/// 
+/// \param [out] fitness the calculated fitness values
+/// \param [out] startPoints the selected start points
+/// \param [out] paths the solution paths generated from the population data
+///////////////////////////////////////////////////////////////////////////////
 __kernel void evaluatePopulation(
 	__global const unsigned char* population,
 	const unsigned int popSize,

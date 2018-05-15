@@ -16,12 +16,28 @@
 #include <iostream>
 #include <string>
 
-void runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& puzzle, gws::Path& path)
+#define POPULATION_SIZE 8192
+#define MAX_ITERATIONS 1000000
+#define CROSSOVER_RATE 0.75
+#define MUTATION_RATE 0.1
+#define RANDOM_SEED 0
+
+///////////////////////////////////////////////////////////////////////////////
+/// \brief Run a puzzle solver and display the result and timing metrics
+/// 
+/// \param [in] solver the puzzle solver
+/// \param [in] name the name of the solver type (e.g., "CPU" or "GPU")
+/// \param [in] puzzle the puzzle
+/// \param [out] path the solution, if one is found
+/// 
+/// \returns true if a solution is found, false otherwise
+///////////////////////////////////////////////////////////////////////////////
+bool runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& puzzle, gws::Path& path)
 {
 	auto start = std::chrono::high_resolution_clock::now();
 	bool solutionFound = solver->solvePuzzle(puzzle, path);
 	auto stop = std::chrono::high_resolution_clock::now();
-	float hostMs = std::chrono::duration<float>(stop - start).count()*1000.0f;
+	float ms = std::chrono::duration<float>(stop - start).count()*1000.0f;
 	
 	std::cout << std::endl;
 	if (solutionFound) {
@@ -32,7 +48,7 @@ void runSolver(gws::Solver* solver, const std::string& name, const gws::Puzzle& 
 	else {
 		std::cout << "No puzzle solution found on " << name << std::endl;
 	}
-	std::cout << name << " execution time: " << hostMs << " ms" << std::endl;
+	std::cout << name << " execution time: " << ms << " ms" << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -65,7 +81,8 @@ int main(int argc, char** argv)
 		std::cout << "Puzzle is too large to solve on host" << std::endl;
 	}
 	
-	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), 8192, 1000000, 0.75, 0.1, 0);
+	gws::GeneticSolver* gpuSolver = new gws::GeneticSolver(puzzle.getWidth(), puzzle.getHeight(), POPULATION_SIZE,
+	                                                       MAX_ITERATIONS, CROSSOVER_RATE, MUTATION_RATE, RANDOM_SEED);
 	runSolver(gpuSolver, "GPU", puzzle, path);
 	std::cout << "GPU population generations: " << gpuSolver->getNumIterations() << std::endl;
 	

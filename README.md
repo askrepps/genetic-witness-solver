@@ -35,6 +35,5 @@ See the [data](data) folder for examples of puzzle files with accompanying image
 
 ## TODO
 Most of the core functionality has been implemented. Some stages of the genetic algorithm (initial generation and crossover/mutation) could be moved inside an OpenCL kernel for performance, but the basic structure is in place and works. The following items have not yet been implemented:
-- [ ] Host-side implementation of population crossover/mutation in `GeneticSolver`
 - [ ] OpenCL kernel implementation of random solution generation
 - [ ] OpenCL kernel implementation of population crossover/mutation
